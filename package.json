@@ -1,0 +1,21 @@
+{
+    "name": "solar-govt-scheme-platform",
+    "version": "1.0.0",
+    "packageManager": "npm@11.6.2",
+    "private": true,
+    "workspaces": [
+        "apps/*"
+    ],
+    "scripts": {
+        "dev": "turbo run dev",
+        "build": "turbo run build",
+        "lint": "turbo run lint",
+        "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    },
+    "devDependencies": {
+        "turbo": "latest",
+        "prettier": "latest",
+        "eslint": "latest",
+        "typescript": "latest"
+    }
+}
