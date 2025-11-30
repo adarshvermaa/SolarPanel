@@ -1,21 +1,24 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request } from '@nestjs/common';
 import { InstallationsService } from './installations.service';
-import { CreateInstallationDto } from './dto/create-installation.dto';
-import { AuthGuard } from '@nestjs/passport';
+import { CreateInstallationDto, UpdateInstallationDto } from './dto/create-installation.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('installations')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class InstallationsController {
   constructor(private readonly installationsService: InstallationsService) { }
 
   @Post()
-  create(@Body() createInstallationDto: CreateInstallationDto) {
-    return this.installationsService.create(createInstallationDto);
+  @Roles('admin', 'superadmin', 'agent')
+  create(@Body() createDto: CreateInstallationDto) {
+    return this.installationsService.create(createDto);
   }
 
   @Get()
-  findAll() {
-    return this.installationsService.findAll();
+  findAll(@Request() req: any) {
+    return this.installationsService.findAll(req.user.userId, req.user.role);
   }
 
   @Get(':id')
@@ -23,8 +26,9 @@ export class InstallationsController {
     return this.installationsService.findOne(+id);
   }
 
-  @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Body('status') status: string) {
-    return this.installationsService.updateStatus(+id, status);
+  @Patch(':id')
+  @Roles('admin', 'superadmin', 'agent')
+  update(@Param('id') id: string, @Body() updateDto: UpdateInstallationDto) {
+    return this.installationsService.update(+id, updateDto);
   }
 }

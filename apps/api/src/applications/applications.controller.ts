@@ -1,35 +1,38 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Request, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request } from '@nestjs/common';
 import { ApplicationsService } from './applications.service';
-import { CreateApplicationDto } from './dto/create-application.dto';
-import { AuthGuard } from '@nestjs/passport';
+import { CreateApplicationDto, UpdateApplicationStatusDto } from './dto/create-application.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('applications')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class ApplicationsController {
   constructor(private readonly applicationsService: ApplicationsService) { }
 
   @Post()
-  create(@Request() req: any, @Body() createApplicationDto: CreateApplicationDto) {
-    return this.applicationsService.create(req.user.userId, createApplicationDto);
+  @Roles('user', 'admin', 'superadmin')
+  create(@Body() createApplicationDto: CreateApplicationDto, @Request() req: any) {
+    return this.applicationsService.create(createApplicationDto, req.user.userId);
   }
 
   @Get()
   findAll(@Request() req: any) {
-    // If admin, return all. If user, return theirs.
-    if (req.user.role === 'admin') {
-      return this.applicationsService.findAll();
-    }
-    return this.applicationsService.findByUser(req.user.userId);
+    return this.applicationsService.findAll(req.user.userId, req.user.role);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.applicationsService.findOne(+id);
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.applicationsService.findOne(+id, req.user.userId, req.user.role);
   }
 
   @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Body('status') status: any) {
-    // Should add check for admin role here
-    return this.applicationsService.updateStatus(+id, status);
+  @Roles('admin', 'superadmin', 'agent')
+  updateStatus(
+    @Param('id') id: string,
+    @Body() updateDto: UpdateApplicationStatusDto,
+    @Request() req: any
+  ) {
+    return this.applicationsService.updateStatus(+id, updateDto, req.user.userId);
   }
 }

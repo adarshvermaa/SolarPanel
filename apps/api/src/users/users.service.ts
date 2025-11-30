@@ -10,10 +10,10 @@ export class UsersService {
     constructor(@Inject(DRIZZLE) private db: DrizzleDB) { }
 
     async create(userData: typeof users.$inferInsert) {
-        const hashedPassword = await bcrypt.hash(userData.passwordHash, 10);
+        // Password is already hashed in AuthService
         return this.db
             .insert(users)
-            .values({ ...userData, passwordHash: hashedPassword })
+            .values(userData)
             .returning();
     }
 
@@ -25,5 +25,30 @@ export class UsersService {
     async findById(id: number) {
         const result = await this.db.select().from(users).where(eq(users.id, id));
         return result[0];
+    }
+    async findAll() {
+        return this.db.select({
+            id: users.id,
+            email: users.email,
+            fullName: users.fullName,
+            role: users.role,
+            isActive: users.isActive,
+            createdAt: users.createdAt,
+        }).from(users);
+    }
+
+    async update(id: number, updateData: Partial<typeof users.$inferInsert>) {
+        return this.db
+            .update(users)
+            .set({ ...updateData, updatedAt: new Date() })
+            .where(eq(users.id, id))
+            .returning();
+    }
+
+    async remove(id: number) {
+        return this.db
+            .delete(users)
+            .where(eq(users.id, id))
+            .returning();
     }
 }

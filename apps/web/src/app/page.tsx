@@ -1,130 +1,84 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
-import { gsap } from 'gsap';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/Button';
+import api from '../lib/api';
+import { SchemeCard } from '../components/SchemeCard';
 
-export default function LandingPage() {
-  const heroRef = useRef(null);
-  const schemesRef = useRef(null);
+export default function HomePage() {
+  const [schemes, setSchemes] = useState([]);
 
   useEffect(() => {
-    const tl = gsap.timeline();
-    tl.fromTo(heroRef.current,
-      { opacity: 0, y: 30 },
-      { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }
-    ).fromTo(schemesRef.current,
-      { opacity: 0 },
-      { opacity: 1, duration: 0.8 },
-      '-=0.4'
-    );
+    const fetchSchemes = async () => {
+      try {
+        const response = await api.get('/schemes');
+        setSchemes(response.data.slice(0, 3)); // Show top 3 schemes
+      } catch (error) {
+        console.error('Failed to fetch schemes', error);
+      }
+    };
+    fetchSchemes();
   }, []);
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navbar */}
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <span className="text-2xl font-bold text-blue-600">SolarGov</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/auth/login">
-                <Button variant="outline">Sign In</Button>
-              </Link>
-              <Link href="/auth/register">
-                <Button>Get Started</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
+    <div className="bg-white">
       {/* Hero Section */}
-      <div className="relative bg-blue-50 overflow-hidden" ref={heroRef}>
-        <div className="max-w-7xl mx-auto">
-          <div className="relative z-10 pb-8 bg-blue-50 sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
-            <main className="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
-              <div className="sm:text-center lg:text-left">
-                <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-                  <span className="block xl:inline">Go Solar with</span>{' '}
-                  <span className="block text-blue-600 xl:inline">Government Schemes</span>
-                </h1>
-                <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-                  Apply for solar panel installation subsidies, track your application, and contribute to a greener future.
-                </p>
-                <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
-                  <div className="rounded-md shadow">
-                    <Link href="/auth/register">
-                      <Button className="w-full flex items-center justify-center px-8 py-3 text-base font-medium md:py-4 md:text-lg md:px-10">
-                        Apply Now
-                      </Button>
-                    </Link>
-                  </div>
-                  <div className="mt-3 sm:mt-0 sm:ml-3">
-                    <Button variant="secondary" className="w-full flex items-center justify-center px-8 py-3 text-base font-medium md:py-4 md:text-lg md:px-10">
-                      Learn More
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </main>
-          </div>
+      <div className="relative bg-green-700">
+        <div className="absolute inset-0">
+          <img
+            className="w-full h-full object-cover opacity-20"
+            src="https://images.unsplash.com/photo-1509391366360-2e959784a276?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80"
+            alt="Solar Panels"
+          />
         </div>
-        <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
-          <div className="h-56 w-full bg-blue-200 sm:h-72 md:h-96 lg:w-full lg:h-full flex items-center justify-center text-blue-500">
-            {/* Placeholder for Hero Image */}
-            <span className="text-lg font-medium">Solar Panel Image Placeholder</span>
+        <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
+          <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+            Go Solar, Save Earth & Money
+          </h1>
+          <p className="mt-6 text-xl text-green-100 max-w-3xl">
+            Access government schemes, apply for subsidies, and track your solar installation journey seamlessly with our platform.
+          </p>
+          <div className="mt-10 max-w-sm sm:flex sm:max-w-none">
+            <div className="space-y-4 sm:space-y-0 sm:mx-auto sm:inline-grid sm:grid-cols-2 sm:gap-5">
+              <Link
+                href="/schemes"
+                className="flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-green-700 bg-white hover:bg-green-50 sm:px-8"
+              >
+                View Schemes
+              </Link>
+              <Link
+                href="/register"
+                className="flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 bg-opacity-60 hover:bg-opacity-70 sm:px-8"
+              >
+                Get Started
+              </Link>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Schemes Section */}
-      <div className="py-12 bg-white" ref={schemesRef}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="lg:text-center">
-            <h2 className="text-base text-blue-600 font-semibold tracking-wide uppercase">Schemes</h2>
-            <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-              Available Government Subsidies
-            </p>
-            <p className="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
-              Explore the latest schemes designed to make solar energy affordable for everyone.
-            </p>
-          </div>
-
-          <div className="mt-10">
-            <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
-              {[1, 2, 3].map((item) => (
-                <div key={item} className="flex flex-col bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-                  <div className="flex-shrink-0">
-                    <div className="h-48 w-full bg-gray-200 flex items-center justify-center text-gray-500">
-                      Scheme Image
-                    </div>
-                  </div>
-                  <div className="flex-1 bg-white p-6 flex flex-col justify-between">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-blue-600">
-                        Residential
-                      </p>
-                      <a href="#" className="block mt-2">
-                        <p className="text-xl font-semibold text-gray-900">
-                          PM Surya Ghar Muft Bijli Yojana
-                        </p>
-                        <p className="mt-3 text-base text-gray-500">
-                          Get subsidy up to ₹78,000 for rooftop solar panels. Free electricity up to 300 units.
-                        </p>
-                      </a>
-                    </div>
-                    <div className="mt-6 flex items-center">
-                      <Button variant="outline" className="w-full">View Details</Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* Featured Schemes Section */}
+      <div className="max-w-7xl mx-auto py-16 px-4 sm:py-24 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <h2 className="text-base font-semibold text-green-600 tracking-wide uppercase">Opportunities</h2>
+          <p className="mt-1 text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
+            Featured Government Schemes
+          </p>
+          <p className="max-w-xl mt-5 mx-auto text-xl text-gray-500">
+            Explore the latest subsidies and incentives available for residential and commercial solar installations.
+          </p>
+        </div>
+        <div className="mt-12 grid gap-8 max-w-lg mx-auto lg:grid-cols-3 lg:max-w-none">
+          {Array.isArray(schemes) && schemes.length > 0 ? (
+            schemes.map((scheme: any) => <SchemeCard key={scheme.id} scheme={scheme} />)
+          ) : (
+            <p className="col-span-full text-center text-sm text-muted-foreground">No schemes found.</p>
+          )}
+        </div>
+        <div className="mt-10 text-center">
+          <Link href="/schemes" className="text-green-600 hover:text-green-800 font-medium text-lg">
+            View All Schemes →
+          </Link>
         </div>
       </div>
     </div>

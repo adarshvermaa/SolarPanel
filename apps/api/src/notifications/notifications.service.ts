@@ -1,62 +1,110 @@
-import { Injectable } from '@nestjs/common';
-import { CreateNotificationDto } from './dto/create-notification.dto';
-import { UpdateNotificationDto } from './dto/update-notification.dto';
-
-export interface Notification {
-  id: number;
-  data: CreateNotificationDto;
-}
+import { Injectable, Inject, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { DRIZZLE } from '../db/db.module';
+import type { DrizzleDB } from '../db/types';
+import { notifications, notificationTemplates, users } from '../db/schema';
+import { eq, desc } from 'drizzle-orm';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class NotificationsService {
-  private notifications: Notification[] = [];
-  private nextId = 1;
+  private readonly logger = new Logger(NotificationsService.name);
 
-  // Existing helper methods
-  async sendEmail(to: string, subject: string, content: string) {
-    console.log(`[Email] To: ${to}, Subject: ${subject}, Content: ${content}`);
-    // Integration with AWS SES or SendGrid would go here
-    return { success: true };
-  }
+  constructor(
+    @Inject(DRIZZLE) private db: DrizzleDB,
+    private configService: ConfigService,
+  ) { }
 
-  async sendWhatsApp(to: string, message: string) {
-    console.log(`[WhatsApp] To: ${to}, Message: ${message}`);
-    // Integration with Meta Cloud API or Twilio would go here
-    return { success: true };
-  }
+  async sendNotification(
+    templateCode: string,
+    recipientId: number,
+    variables: Record<string, any>,
+    channels: ('email' | 'whatsapp' | 'sms')[] = ['email']
+  ) {
+    try {
+      // 1. Get Template
+      const template = await this.db.query.notificationTemplates.findFirst({
+        where: eq(notificationTemplates.code, templateCode),
+      });
 
-  // CRUD operations for notifications
-  create(createNotificationDto: CreateNotificationDto) {
-    const notification: Notification = {
-      id: this.nextId++,
-      data: createNotificationDto,
-    };
-    this.notifications.push(notification);
-    return notification;
-  }
+      if (!template) {
+        this.logger.error(`Template not found: ${templateCode}`);
+        return;
+      }
 
-  findAll() {
-    return this.notifications;
-  }
+      // 2. Get Recipient
+      const recipient = await this.db.query.users.findFirst({
+        where: eq(users.id, recipientId),
+      });
 
-  findOne(id: number) {
-    return this.notifications.find((n) => n.id === id);
-  }
+      if (!recipient) {
+        this.logger.error(`Recipient not found: ${recipientId}`);
+        return;
+      }
 
-  update(id: number, updateNotificationDto: UpdateNotificationDto) {
-    const notification = this.findOne(id);
-    if (notification) {
-      notification.data = { ...notification.data, ...updateNotificationDto } as any;
+      // 3. Process Template
+      let message = template.template;
+      Object.keys(variables).forEach((key) => {
+        message = message.replace(new RegExp(`{{${key}}}`, 'g'), variables[key]);
+      });
+
+      let subject = template.subject;
+      if (subject) {
+        Object.keys(variables).forEach((key) => {
+          subject = subject!.replace(new RegExp(`{{${key}}}`, 'g'), variables[key]);
+        });
+      }
+
+      // 4. Send via Channels
+      for (const channel of channels) {
+        if (channel === 'email' && template.type === 'email') {
+          await this.sendEmail(recipient.email, subject!, message);
+        } else if (channel === 'whatsapp' && template.type === 'whatsapp') {
+          await this.sendWhatsApp(recipient.phone!, message);
+        }
+      }
+
+      // 5. Log Notification
+      await this.db.insert(notifications).values({
+        type: template.type,
+        recipientId,
+        recipientEmail: recipient.email,
+        recipientPhone: recipient.phone,
+        templateId: template.id,
+        subject: subject,
+        message,
+        status: 'sent',
+        sentAt: new Date(),
+        metadata: variables,
+      });
+
+    } catch (error) {
+      this.logger.error(`Failed to send notification: ${error.message}`, error.stack);
     }
-    return notification;
   }
 
-  remove(id: number) {
-    const index = this.notifications.findIndex((n) => n.id === id);
-    if (index >= 0) {
-      const [removed] = this.notifications.splice(index, 1);
-      return removed;
+  private async sendEmail(to: string, subject: string, body: string) {
+    // Mock implementation or integration with AWS SES / SendGrid
+    this.logger.log(`[EMAIL] To: ${to}, Subject: ${subject}`);
+    // console.log(body);
+    // In production: await this.emailProvider.send(...)
+  }
+
+  private async sendWhatsApp(to: string, message: string) {
+    // Mock implementation or integration with Twilio / Interakt
+    this.logger.log(`[WHATSAPP] To: ${to}, Message: ${message}`);
+    // In production: await this.whatsappProvider.send(...)
+  }
+
+  async findAll() {
+    return this.db.select().from(notifications).orderBy(desc(notifications.createdAt));
+  }
+
+  async findOne(id: number) {
+    const result = await this.db.select().from(notifications).where(eq(notifications.id, id));
+    if (!result.length) {
+      throw new NotFoundException(`Notification with ID ${id} not found`);
     }
-    return null;
+    return result[0];
   }
 }

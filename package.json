@@ -13,9 +13,12 @@
         "format": "prettier --write \"**/*.{ts,tsx,md}\""
     },
     "devDependencies": {
-        "turbo": "latest",
-        "prettier": "latest",
         "eslint": "latest",
+        "prettier": "latest",
+        "turbo": "latest",
         "typescript": "latest"
+    },
+    "dependencies": {
+        "axios": "^1.13.2"
     }
 }

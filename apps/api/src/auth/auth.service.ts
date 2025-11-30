@@ -25,7 +25,12 @@ export class AuthService {
         const payload = { email: user.email, sub: user.id, role: user.role };
         return {
             access_token: this.jwtService.sign(payload),
-            // refresh_token logic can be added here
+            user: {
+                id: user.id,
+                email: user.email,
+                fullName: user.fullName,
+                role: user.role,
+            }
         };
     }
 
@@ -35,12 +40,17 @@ export class AuthService {
         if (existing) {
             throw new UnauthorizedException('User already exists');
         }
+
+        const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+
         const newUser = await this.usersService.create({
             email: registerDto.email,
-            passwordHash: registerDto.password, // Will be hashed in UsersService
+            passwordHash: hashedPassword,
             role: registerDto.role || 'user',
             fullName: registerDto.fullName,
+            phone: registerDto.phone,
         });
+
         return this.login(newUser[0]);
     }
 }
