@@ -164,7 +164,7 @@ SolarPanel/
    ```
 
    This will start:
-   - Backend API: `http://localhost:3001`
+   - Backend API: `http://localhost:8080`
    - Frontend Web: `http://localhost:3000`
 
 ## 💻 Development
@@ -373,3 +373,50 @@ For questions or support, please contact the development team.
 ---
 
 **Built with ❤️ for sustainable energy initiatives**
+
+
+
+sudo tee /etc/nginx/sites-available/solar-panel > /dev/null <<'NGINX'
+upstream solar_api {
+    server 127.0.0.1:8080;
+}
+
+upstream solar_web {
+    server 127.0.0.1:3000;
+}
+
+server {
+    listen 80;
+    server_name dpcg.in;  # for IP / self-signed testing
+
+    # Let certbot use this if you later add a domain
+    location /.well-known/acme-challenge/ {
+        root /var/www/letsencrypt;
+    }
+
+    # Proxy all /api to backend
+    location /api/ {
+        proxy_pass http://solar_api;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Proxy everything else to Next.js (server)
+    location / {
+        proxy_pass http://solar_web;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+NGINX
+
+sudo ln -sf /etc/nginx/sites-available/solar-panel /etc/nginx/sites-enabled/solar-panel
+sudo nginx -t
+sudo systemctl reload nginx

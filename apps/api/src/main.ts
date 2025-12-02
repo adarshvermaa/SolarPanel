@@ -11,6 +11,9 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Set global prefix
+  app.setGlobalPrefix('api/v1');
+
   const config = new DocumentBuilder()
     .setTitle('Solar Panel API')
     .setDescription('API documentation for Solar Panel Govt-scheme Installations')
