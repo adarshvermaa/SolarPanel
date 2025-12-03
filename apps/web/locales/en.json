@@ -1,0 +1,38 @@
+{
+    "nav": {
+        "home": "Home",
+        "schemes": "Schemes",
+        "apply": "Apply",
+        "track": "Track Application",
+        "blog": "Blog",
+        "contact": "Contact"
+    },
+    "hero": {
+        "title": "Power Your Home with Solar Energy",
+        "subtitle": "Access government subsidies, find certified installers, and switch to clean energy in Chhattisgarh.",
+        "cta_primary": "Browse Schemes",
+        "cta_secondary": "Calculate Savings"
+    },
+    "eligibility": {
+        "title": "Check Your Eligibility",
+        "applicant_type": "Applicant Type",
+        "connection_type": "Connection Type",
+        "roof_area": "Roof Area (sq ft)",
+        "bill": "Avg. Monthly Bill (₹)",
+        "submit": "Check Eligibility",
+        "success": "You are Eligible!",
+        "failure": "Not Eligible"
+    },
+    "footer": {
+        "about": "Empowering Chhattisgarh with sustainable solar energy solutions.",
+        "quick_links": "Quick Links",
+        "resources": "Resources",
+        "contact": "Contact Us",
+        "rights": "All rights reserved."
+    },
+    "errors": {
+        "required": "This field is required",
+        "invalid_email": "Invalid email address",
+        "network_error": "Network error, please try again"
+    }
+}

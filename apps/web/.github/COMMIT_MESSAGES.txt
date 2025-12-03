@@ -1,0 +1,12 @@
+feat: add eligibility checker component
+feat(auth): implement login flow
+fix: resolve mobile menu overlap issue
+fix(api): handle timeout in scheme fetch
+chore: update tailwind config
+chore(deps): upgrade next.js to 16
+docs: add installation guide to README
+docs(api): update swagger documentation
+style: improve button hover states
+refactor: simplify header component logic
+test: add unit tests for scheme card
+perf: optimize hero image loading

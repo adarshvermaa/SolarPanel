@@ -1,0 +1,12 @@
+{
+    "photorealistic": {
+        "prompt": "A high-quality, photorealistic wide shot of a modern solar panel installation on a rural Indian rooftop in Chhattisgarh. Warm golden hour lighting (Primary Color #FFB400). In the background, lush green fields and a subtle outline of the Chhattisgarh map in the sky. Overlay text in clean, modern white typography (Inter font): 'Solar subsidies & installations - Chhattisgarh'. Professional, optimistic, sustainable energy vibe. 1200x630 resolution.",
+        "alt_text": "Solar panels on a rooftop in Chhattisgarh with golden sunlight",
+        "filename": "public/og-home-1200x630.jpg"
+    },
+    "flat_illustration": {
+        "prompt": "A modern, flat vector illustration of a house with solar panels on the roof. Stylized sun rays in warm yellow (#FFB400) and teal (#06B6D4) accents. Background features a simplified map outline of Chhattisgarh. Minimalist design, clean lines, solid colors (Deep Indigo #0F172A for shadows). Text overlay: 'Solar subsidies & installations - Chhattisgarh'. 1200x630 resolution.",
+        "alt_text": "Illustration of solar rooftop installation in Chhattisgarh",
+        "filename": "public/og-home-flat-1200x630.png"
+    }
+}
