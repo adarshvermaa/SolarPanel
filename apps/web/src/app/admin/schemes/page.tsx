@@ -44,8 +44,8 @@ export default function AdminSchemesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="sm:flex sm:items-center">
                 <div className="sm:flex-auto">
-                    <h1 className="text-2xl font-semibold text-gray-900">Schemes</h1>
-                    <p className="mt-2 text-sm text-gray-700">
+                    <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Schemes</h1>
+                    <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
                         Manage government solar schemes. Add new schemes or update existing ones.
                     </p>
                 </div>
@@ -60,34 +60,34 @@ export default function AdminSchemesPage() {
             </div>
             <div ref={listRef} className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {schemes?.map((scheme: any) => (
-                    <div key={scheme.id} className="bg-white overflow-hidden shadow rounded-lg flex flex-col">
+                    <div key={scheme.id} className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg flex flex-col">
                         <div className="px-4 py-5 sm:p-6 flex-1">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-medium leading-6 text-gray-900 truncate">
+                                <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white truncate">
                                     {scheme.name}
                                 </h3>
                                 <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${scheme.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                                     {scheme.isActive ? 'Active' : 'Inactive'}
                                 </span>
                             </div>
-                            <p className="mt-2 text-sm text-gray-500 line-clamp-3">
+                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 line-clamp-3">
                                 {scheme.description}
                             </p>
-                            <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
+                            <div className="mt-4 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                                 <span>Subsidy: {scheme.subsidyPercentage}%</span>
                                 <span>Max: ₹{scheme.maxSubsidyAmount}</span>
                             </div>
                         </div>
-                        <div className="bg-gray-50 px-4 py-4 sm:px-6 flex justify-end space-x-3">
+                        <div className="bg-gray-50 dark:bg-gray-700 px-4 py-4 sm:px-6 flex justify-end space-x-3">
                             <Link
                                 href={`/admin/schemes/${scheme.id}/edit`}
-                                className="text-indigo-600 hover:text-indigo-900 font-medium text-sm"
+                                className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium text-sm"
                             >
                                 Edit
                             </Link>
                             <button
                                 onClick={() => handleDelete(scheme.id)}
-                                className="text-red-600 hover:text-red-900 font-medium text-sm"
+                                className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 font-medium text-sm"
                             >
                                 Delete
                             </button>

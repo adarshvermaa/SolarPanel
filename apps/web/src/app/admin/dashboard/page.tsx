@@ -50,56 +50,56 @@ export default function AdminDashboardPage() {
 
     return (
         <div className="max-w-7xl mx-auto">
-            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl mb-8">
+            <h2 className="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl mb-8">
                 Admin Dashboard
             </h2>
 
             {/* Stats Grid */}
             <div ref={statsRef} className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-                <div className="stat-card bg-white overflow-hidden shadow rounded-lg">
+                <div className="stat-card bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
                     <div className="px-4 py-5 sm:p-6">
-                        <dt className="text-sm font-medium text-gray-500 truncate">Total Users</dt>
-                        <dd className="mt-1 text-3xl font-semibold text-gray-900">{stats.stats?.totalUsers || 0}</dd>
+                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Users</dt>
+                        <dd className="mt-1 text-3xl font-semibold text-gray-900 dark:text-white">{stats.stats?.totalUsers || 0}</dd>
                     </div>
                 </div>
-                <div className="stat-card bg-white overflow-hidden shadow rounded-lg">
+                <div className="stat-card bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
                     <div className="px-4 py-5 sm:p-6">
-                        <dt className="text-sm font-medium text-gray-500 truncate">Total Applications</dt>
-                        <dd className="mt-1 text-3xl font-semibold text-gray-900">{stats.stats?.totalApplications || 0}</dd>
+                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Applications</dt>
+                        <dd className="mt-1 text-3xl font-semibold text-gray-900 dark:text-white">{stats.stats?.totalApplications || 0}</dd>
                     </div>
                 </div>
-                <div className="stat-card bg-white overflow-hidden shadow rounded-lg">
+                <div className="stat-card bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
                     <div className="px-4 py-5 sm:p-6">
-                        <dt className="text-sm font-medium text-gray-500 truncate">Active Schemes</dt>
-                        <dd className="mt-1 text-3xl font-semibold text-gray-900">{stats.stats?.totalSchemes || 0}</dd>
+                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Active Schemes</dt>
+                        <dd className="mt-1 text-3xl font-semibold text-gray-900 dark:text-white">{stats.stats?.totalSchemes || 0}</dd>
                     </div>
                 </div>
-                <div className="stat-card bg-white overflow-hidden shadow rounded-lg">
+                <div className="stat-card bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
                     <div className="px-4 py-5 sm:p-6">
-                        <dt className="text-sm font-medium text-gray-500 truncate">Installations</dt>
-                        <dd className="mt-1 text-3xl font-semibold text-gray-900">{stats.stats?.totalInstallations || 0}</dd>
+                        <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Installations</dt>
+                        <dd className="mt-1 text-3xl font-semibold text-gray-900 dark:text-white">{stats.stats?.totalInstallations || 0}</dd>
                     </div>
                 </div>
             </div>
 
             {/* Recent Applications */}
-            <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-                <div className="px-4 py-5 border-b border-gray-200 sm:px-6 flex justify-between items-center">
+            <div className="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
+                <div className="px-4 py-5 border-b border-gray-200 dark:border-gray-700 sm:px-6 flex justify-between items-center">
                     <div>
-                        <h3 className="text-lg leading-6 font-medium text-gray-900">Recent Applications</h3>
-                        <p className="mt-1 max-w-2xl text-sm text-gray-500">Latest submissions requiring review.</p>
+                        <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-white">Recent Applications</h3>
+                        <p className="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">Latest submissions requiring review.</p>
                     </div>
                     <Link href="/admin/applications" className="text-green-600 hover:text-green-800 text-sm font-medium">
                         View All
                     </Link>
                 </div>
-                <ul ref={listRef} className="divide-y divide-gray-200">
+                <ul ref={listRef} className="divide-y divide-gray-200 dark:divide-gray-700">
                     {stats?.recentApplications?.map((app: any) => (
                         <li key={app.id}>
-                            <Link href={`/admin/applications/${app.id}`} className="block hover:bg-gray-50">
+                            <Link href={`/admin/applications/${app.id}`} className="block hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                 <div className="px-4 py-4 sm:px-6">
                                     <div className="flex items-center justify-between">
-                                        <p className="text-sm font-medium text-green-600 truncate">
+                                        <p className="text-sm font-medium text-green-600 dark:text-green-400 truncate">
                                             Application #{app.applicationNumber}
                                         </p>
                                         <div className="ml-2 flex-shrink-0 flex">
@@ -112,11 +112,11 @@ export default function AdminDashboardPage() {
                                     </div>
                                     <div className="mt-2 sm:flex sm:justify-between">
                                         <div className="sm:flex">
-                                            <p className="flex items-center text-sm text-gray-500">
+                                            <p className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                                                 {app.applicantName}
                                             </p>
                                         </div>
-                                        <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                                        <div className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400 sm:mt-0">
                                             <p>Submitted on {new Date(app.createdAt).toLocaleDateString()}</p>
                                         </div>
                                     </div>

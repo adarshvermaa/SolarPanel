@@ -69,16 +69,16 @@ export default function EditBlogPostPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="md:flex md:items-center md:justify-between mb-8">
                 <div className="flex-1 min-w-0">
-                    <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                    <h2 className="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
                         Edit Blog Post
                     </h2>
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-8 divide-y divide-gray-200 bg-white p-8 shadow rounded-lg">
+            <form onSubmit={handleSubmit} className="space-y-8 divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800 p-8 shadow rounded-lg">
                 <div className="space-y-6">
                     <div>
-                        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Title
                         </label>
                         <div className="mt-1">
@@ -89,13 +89,13 @@ export default function EditBlogPostPage() {
                                 required
                                 value={formData.title}
                                 onChange={handleChange}
-                                className="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                className="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Excerpt
                         </label>
                         <div className="mt-1">
@@ -106,14 +106,14 @@ export default function EditBlogPostPage() {
                                 required
                                 value={formData.excerpt}
                                 onChange={handleChange}
-                                className="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md"
+                                className="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             />
                         </div>
-                        <p className="mt-2 text-sm text-gray-500">Brief summary of the post.</p>
+                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Brief summary of the post.</p>
                     </div>
 
                     <div>
-                        <label htmlFor="content" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Content (HTML supported)
                         </label>
                         <div className="mt-1">
@@ -124,13 +124,13 @@ export default function EditBlogPostPage() {
                                 required
                                 value={formData.content}
                                 onChange={handleChange}
-                                className="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 rounded-md font-mono"
+                                className="shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md font-mono bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label htmlFor="coverImage" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="coverImage" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Cover Image URL
                         </label>
                         <div className="mt-1">
@@ -146,7 +146,7 @@ export default function EditBlogPostPage() {
                     </div>
 
                     <div>
-                        <label htmlFor="tags" className="block text-sm font-medium text-gray-700">
+                        <label htmlFor="tags" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                             Tags (comma separated)
                         </label>
                         <div className="mt-1">
@@ -170,14 +170,14 @@ export default function EditBlogPostPage() {
                                 type="checkbox"
                                 checked={formData.isPublished}
                                 onChange={handleChange}
-                                className="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 rounded"
+                                className="focus:ring-green-500 h-4 w-4 text-green-600 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
                             />
                         </div>
                         <div className="ml-3 text-sm">
-                            <label htmlFor="isPublished" className="font-medium text-gray-700">
+                            <label htmlFor="isPublished" className="font-medium text-gray-700 dark:text-gray-300">
                                 Publish Immediately
                             </label>
-                            <p className="text-gray-500">If unchecked, the post will be saved as a draft.</p>
+                            <p className="text-gray-500 dark:text-gray-400">If unchecked, the post will be saved as a draft.</p>
                         </div>
                     </div>
                 </div>
@@ -187,7 +187,7 @@ export default function EditBlogPostPage() {
                         <button
                             type="button"
                             onClick={() => router.back()}
-                            className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                            className="bg-white dark:bg-gray-700 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                         >
                             Cancel
                         </button>

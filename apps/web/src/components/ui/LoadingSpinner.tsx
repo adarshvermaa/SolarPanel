@@ -32,7 +32,7 @@ export default function LoadingSpinner({ size = 'md', className = '' }: LoadingS
         <div className={`flex items-center justify-center ${className}`}>
             <div
                 ref={spinnerRef}
-                className={`${sizeClasses[size]} border-4 border-green-200 border-t-green-600 rounded-full`}
+                className={`${sizeClasses[size]} border-4 border-green-200 dark:border-green-800 border-t-green-600 dark:border-t-green-400 rounded-full`}
             />
         </div>
     );
