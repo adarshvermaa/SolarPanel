@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -13,12 +13,23 @@ export class AuthService {
     ) { }
 
     async validateUser(email: string, pass: string): Promise<any> {
-        const user = await this.usersService.findByEmail(email);
-        if (user && (await bcrypt.compare(pass, user.passwordHash))) {
+        try {
+            const user = await this.usersService.findByEmail(email);
+            if (!user) {
+                return null;
+            }
+
+            const isPasswordValid = await bcrypt.compare(pass, user.passwordHash);
+            if (!isPasswordValid) {
+                return null;
+            }
+
             const { passwordHash, ...result } = user;
             return result;
+        } catch (error) {
+            console.error('Error validating user:', error);
+            return null;
         }
-        return null;
     }
 
     async login(user: any) {
@@ -35,22 +46,37 @@ export class AuthService {
     }
 
     async register(registerDto: RegisterDto) {
-        // Check if user exists
-        const existing = await this.usersService.findByEmail(registerDto.email);
-        if (existing) {
-            throw new UnauthorizedException('User already exists');
+        try {
+            // Check if user exists
+            const existing = await this.usersService.findByEmail(registerDto.email);
+            if (existing) {
+                throw new ConflictException('An account with this email already exists');
+            }
+
+            // Validate password strength
+            if (registerDto.password.length < 6) {
+                throw new BadRequestException('Password must be at least 6 characters long');
+            }
+
+            const hashedPassword = await bcrypt.hash(registerDto.password, 10);
+
+            const newUser = await this.usersService.create({
+                email: registerDto.email,
+                passwordHash: hashedPassword,
+                role: registerDto.role || 'user',
+                fullName: registerDto.fullName,
+                phone: registerDto.phone,
+            });
+
+            return this.login(newUser[0]);
+        } catch (error) {
+            // Rethrow known exceptions
+            if (error instanceof ConflictException || error instanceof BadRequestException) {
+                throw error;
+            }
+            // Handle unexpected errors
+            console.error('Registration error:', error);
+            throw new BadRequestException('Registration failed. Please try again.');
         }
-
-        const hashedPassword = await bcrypt.hash(registerDto.password, 10);
-
-        const newUser = await this.usersService.create({
-            email: registerDto.email,
-            passwordHash: hashedPassword,
-            role: registerDto.role || 'user',
-            fullName: registerDto.fullName,
-            phone: registerDto.phone,
-        });
-
-        return this.login(newUser[0]);
     }
 }

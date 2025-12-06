@@ -10,10 +10,12 @@ interface User {
     fullName: string;
     role: string;
     avatar?: string;
+    phone?: string;
 }
 
 interface AuthContextType {
     user: User | null;
+    token: string | null;
     login: (email: string, password: string) => Promise<void>;
     register: (email: string, password: string, fullName: string, phone: string) => Promise<void>;
     logout: () => void;
@@ -24,20 +26,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
+    const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
 
     useEffect(() => {
         const initAuth = async () => {
-            const token = localStorage.getItem('token');
+            const storedToken = localStorage.getItem('token');
             const storedUser = localStorage.getItem('user');
 
-            if (token && storedUser) {
+            if (storedToken && storedUser) {
                 try {
                     // Verify token with backend
                     const response = await api.get('/auth/profile');
                     const userData = response.data;
                     setUser(userData);
+                    setToken(storedToken);
                     // Update stored user data if needed
                     localStorage.setItem('user', JSON.stringify(userData));
                 } catch (error) {
@@ -45,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     localStorage.removeItem('token');
                     localStorage.removeItem('user');
                     setUser(null);
+                    setToken(null);
                 }
             }
             setIsLoading(false);
@@ -63,9 +68,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             localStorage.setItem('token', access_token);
             localStorage.setItem('user', JSON.stringify(userData));
             setUser(userData);
+            setToken(access_token);
 
             // Redirect based on role
-            if (userData.role === 'admin') {
+            if (userData.role === 'agent') {
+                router.push('/agent/dashboard');
+            } else if (userData.role === 'admin' || userData.role === 'superadmin') {
                 router.push('/admin/dashboard');
             } else {
                 router.push('/dashboard');
@@ -92,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             localStorage.setItem('token', access_token);
             localStorage.setItem('user', JSON.stringify(userData));
             setUser(userData);
+            setToken(access_token);
 
             // Redirect to dashboard
             router.push('/dashboard');
@@ -105,11 +114,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
+        setToken(null);
         router.push('/auth/login');
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, token, login, register, logout, isLoading }}>
             {children}
         </AuthContext.Provider>
     );

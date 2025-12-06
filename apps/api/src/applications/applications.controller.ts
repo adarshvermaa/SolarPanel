@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, UseGuards, Request, Query } from '@nestjs/common';
 import { ApplicationsService } from './applications.service';
 import { CreateApplicationDto, UpdateApplicationStatusDto } from './dto/create-application.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -17,8 +17,8 @@ export class ApplicationsController {
   }
 
   @Get()
-  findAll(@Request() req: any) {
-    return this.applicationsService.findAll(req.user.userId, req.user.role);
+  findAll(@Request() req: any, @Query() query: any) {
+    return this.applicationsService.findAll(req.user.userId, req.user.role, query);
   }
 
   @Get(':id')

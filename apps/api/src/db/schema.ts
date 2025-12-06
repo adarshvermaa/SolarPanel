@@ -299,3 +299,20 @@ export const auditLogs = pgTable('audit_logs', {
     createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// ============================================================
+// CALCULATOR CONFIG
+// ============================================================
+
+export const calculatorConfig = pgTable('calculator_config', {
+    id: serial('id').primaryKey(),
+    stateName: text('state_name').unique().notNull(), // 'Default' or specific states
+    avgSunlightHours: decimal('avg_sunlight_hours', { precision: 4, scale: 2 }).notNull(),
+    costPerKw: decimal('cost_per_kw', { precision: 10, scale: 2 }).notNull(),
+    electricityRate: decimal('electricity_rate', { precision: 6, scale: 2 }).notNull(), // Cost per unit
+    efficiencyPanel: decimal('efficiency_panel', { precision: 5, scale: 2 }).default('0.18').notNull(), // 18% default
+    co2SavingsPerUnit: decimal('co2_savings_per_unit', { precision: 6, scale: 3 }).default('0.71').notNull(), // kg CO2 per kWh
+    isActive: boolean('is_active').default(true).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+

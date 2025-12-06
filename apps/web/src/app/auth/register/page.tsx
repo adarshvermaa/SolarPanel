@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import Link from 'next/link';
 import { useAuth } from '../../../context/AuthContext';
+import { toast } from 'react-hot-toast';
 
 export default function RegisterPage() {
     const containerRef = useRef(null);
@@ -90,6 +91,7 @@ export default function RegisterPage() {
         e.preventDefault();
 
         if (!validateForm()) {
+            toast.error('Please fix the errors in the form');
             return;
         }
 
@@ -98,10 +100,13 @@ export default function RegisterPage() {
 
         try {
             await register(formData.email, formData.password, formData.fullName, formData.phone);
+            toast.success('Account created successfully! Redirecting...');
         } catch (error: any) {
+            const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
             setErrors({
-                general: error.response?.data?.message || 'Registration failed. Please try again.'
+                general: errorMessage
             });
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -226,9 +231,9 @@ export default function RegisterPage() {
                                     <div className="flex items-center justify-between mb-1">
                                         <span className="text-xs text-gray-600 dark:text-gray-400">Password strength:</span>
                                         <span className={`text-xs font-medium ${passwordStrength <= 1 ? 'text-red-600' :
-                                                passwordStrength === 2 ? 'text-yellow-600' :
-                                                    passwordStrength === 3 ? 'text-blue-600' :
-                                                        'text-green-600'
+                                            passwordStrength === 2 ? 'text-yellow-600' :
+                                                passwordStrength === 3 ? 'text-blue-600' :
+                                                    'text-green-600'
                                             }`}>{getPasswordStrengthText()}</span>
                                     </div>
                                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">

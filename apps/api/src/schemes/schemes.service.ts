@@ -2,7 +2,7 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { DRIZZLE } from '../db/db.module';
 import type { DrizzleDB } from '../db/types';
 import { schemes } from '../db/schema';
-import { eq, desc, ilike, and } from 'drizzle-orm';
+import { eq, desc, ilike, and, sql } from 'drizzle-orm';
 import { CreateSchemeDto } from './dto/create-scheme.dto';
 
 @Injectable()
@@ -31,22 +31,61 @@ export class SchemesService {
       .returning();
   }
 
-  async findAll(query?: { search?: string; isActive?: boolean }) {
+  async findAll(query: any = {}) {
+    const { page, limit, search, isActive } = query;
+    const pageNumber = page ? parseInt(page) : undefined;
+    const limitNumber = limit ? parseInt(limit) : undefined;
+    const offset = pageNumber && limitNumber ? (pageNumber - 1) * limitNumber : undefined;
+
     const conditions = [];
 
-    if (query?.search) {
-      conditions.push(ilike(schemes.name, `%${query.search}%`));
+    if (search) {
+      conditions.push(ilike(schemes.name, `%${search}%`));
     }
 
-    if (query?.isActive !== undefined) {
-      conditions.push(eq(schemes.isActive, query.isActive));
+    if (isActive !== undefined) {
+      // Handle string 'true'/'false' or boolean
+      const active = isActive === 'true' ? true : isActive === 'false' ? false : isActive;
+      if (typeof active === 'boolean') {
+        conditions.push(eq(schemes.isActive, active));
+      }
     }
 
-    return this.db
+    const baseQuery = this.db
       .select()
       .from(schemes)
-      .where(conditions.length ? and(...conditions) : undefined)
-      .orderBy(desc(schemes.createdAt));
+      .where(conditions.length ? and(...conditions) : undefined);
+
+    if (limitNumber) {
+      baseQuery.limit(limitNumber);
+    }
+    if (offset) {
+      baseQuery.offset(offset);
+    }
+
+    const data = await baseQuery.orderBy(desc(schemes.createdAt));
+
+    if (pageNumber && limitNumber) {
+      const countQuery = this.db
+        .select({ count: sql<number>`count(*)` })
+        .from(schemes)
+        .where(conditions.length ? and(...conditions) : undefined);
+
+      const countResult = await countQuery;
+      const total = Number(countResult[0]?.count || 0);
+
+      return {
+        data,
+        meta: {
+          total,
+          page: pageNumber,
+          limit: limitNumber,
+          totalPages: Math.ceil(total / limitNumber),
+        }
+      };
+    }
+
+    return data;
   }
 
   async findOne(id: number) {

@@ -23,7 +23,11 @@ export function useMutation<TData = any, TVariables = any>(
         setLoading(true);
         setError(null);
         try {
-            const response = await api[method]<TData>(endpoint, data, config);
+            const requestConfig = {
+                ...config,
+                skipToast: options.showErrorToast === false
+            };
+            const response = await api[method]<TData>(endpoint, data, requestConfig as AxiosRequestConfig);
 
             if (options.showSuccessToast !== false && options.successMessage) {
                 showSuccess(options.successMessage);
@@ -37,9 +41,7 @@ export function useMutation<TData = any, TVariables = any>(
         } catch (err: any) {
             setError(err);
 
-            if (options.showErrorToast !== false) {
-                showError(err.response?.data?.message || 'Operation failed');
-            }
+            // Error toast handled by api interceptor unless skipToast is true
 
             if (options.onError) {
                 options.onError(err);

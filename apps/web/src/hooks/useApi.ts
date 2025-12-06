@@ -28,16 +28,16 @@ export function useApi<T = any>(
         setLoading(true);
         setError(null);
         try {
-            const response = await api.get(endpoint);
+            const response = await api.get(endpoint, {
+                skipToast: optionsRef.current.showErrorToast === false
+            } as any);
             setData(response.data);
             if (optionsRef.current.onSuccess) {
                 optionsRef.current.onSuccess(response.data);
             }
         } catch (err: any) {
             setError(err);
-            if (optionsRef.current.showErrorToast !== false) {
-                showError(err.response?.data?.message || 'Failed to fetch data');
-            }
+            // Error toast handled by api interceptor unless skipToast is true
             if (optionsRef.current.onError) {
                 optionsRef.current.onError(err);
             }

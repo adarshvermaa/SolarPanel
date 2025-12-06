@@ -4,50 +4,87 @@ import React, { useState, useEffect } from 'react';
 import { gsap } from 'gsap';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { useApi } from '@/hooks/useApi';
+
+interface CalculatorConfig {
+    id: number;
+    stateName: string;
+    avgSunlightHours: string;
+    costPerKw: string;
+    electricityRate: string;
+    efficiencyPanel: string;
+    co2SavingsPerUnit: string;
+}
 
 export default function CalculatorPage() {
     const [monthlyBill, setMonthlyBill] = useState('');
     const [roofArea, setRoofArea] = useState('');
+    const [selectedStateId, setSelectedStateId] = useState<string>('');
     const [result, setResult] = useState<any>(null);
-    const [loading, setLoading] = useState(false);
+    const [calculating, setCalculating] = useState(false);
 
-    // Constants for calculation (approximate values for India)
-    const UNIT_RATE = 8; // Avg cost per unit in INR
-    const SOLAR_GENERATION_PER_KW = 4; // Units per day per kW
-    const COST_PER_KW = 50000; // Approx cost per kW in INR
-    const AREA_PER_KW = 100; // Sq ft required per kW
+    // Fetch calculator configurations
+    const { data: configs, loading: configLoading } = useApi<CalculatorConfig[]>('/calculator');
+
+    // Set default state when configs load
+    useEffect(() => {
+        if (configs && configs.length > 0 && !selectedStateId) {
+            // Prefer "Default" state if exists, else first one
+            const defaultConfig = configs.find(c => c.stateName === 'Default') || configs[0];
+            setSelectedStateId(defaultConfig.id.toString());
+        }
+    }, [configs, selectedStateId]);
 
     const calculateSolar = (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
+        setCalculating(true);
 
         // Simulate calculation delay for better UX
         setTimeout(() => {
             const bill = parseFloat(monthlyBill);
             const area = parseFloat(roofArea);
+            const config = configs?.find(c => c.id.toString() === selectedStateId);
 
-            if (isNaN(bill) || isNaN(area)) {
-                setLoading(false);
+            if (isNaN(bill) || isNaN(area) || !config) {
+                setCalculating(false);
                 return;
             }
 
+            // Parse config values (received as strings from decimal columns)
+            const unitRate = parseFloat(config.electricityRate);
+            const avgSunHours = parseFloat(config.avgSunlightHours);
+            const costPerKw = parseFloat(config.costPerKw);
+            const efficiency = parseFloat(config.efficiencyPanel);
+
+            // Derive generation factor
+            // Assuming 80% Performance Ratio (PR)
+            // Units per day per kW = 1 kW * Avg Sun Hours * 0.8
+            const dailyGenerationPerKw = avgSunHours * 0.8;
+
+            // Area per kW
+            // 1 kW = 1000 W. Panel Area = 1000 / (1000 W/m2 * Efficiency) / 10.764 sqft/m2
+            // Roughly 100 sq ft is a safe standard including gaps
+            const areaPerKw = 100;
+
             // Calculations
-            const monthlyUnits = bill / UNIT_RATE;
+            const monthlyUnits = bill / unitRate;
             const dailyUnits = monthlyUnits / 30;
 
             // Recommended capacity based on consumption
-            let recommendedCapacity = dailyUnits / SOLAR_GENERATION_PER_KW;
+            let recommendedCapacity = dailyUnits / dailyGenerationPerKw;
 
             // Check if roof area is sufficient
-            const maxCapacityByArea = area / AREA_PER_KW;
+            const maxCapacityByArea = area / areaPerKw;
 
             // Final recommended capacity (limited by area)
             const finalCapacity = Math.min(recommendedCapacity, maxCapacityByArea);
 
             // Financials
-            const estimatedCost = finalCapacity * COST_PER_KW;
+            const estimatedCost = finalCapacity * costPerKw;
 
             // Subsidy Calculation (PM Surya Ghar)
+            // This logic remains static as it's a central scheme feature, 
+            // unless we move subsidy rules to backend too.
             let subsidy = 0;
             if (finalCapacity <= 2) {
                 subsidy = finalCapacity * 30000;
@@ -58,22 +95,23 @@ export default function CalculatorPage() {
             }
 
             const netCost = estimatedCost - subsidy;
-            const monthlySavings = monthlyUnits * UNIT_RATE;
+            const monthlySavings = monthlyUnits * unitRate;
             const annualSavings = monthlySavings * 12;
-            const roiYears = netCost / annualSavings;
+            const roiYears = annualSavings > 0 ? netCost / annualSavings : 0;
 
             setResult({
                 capacity: finalCapacity.toFixed(2),
-                areaRequired: (finalCapacity * AREA_PER_KW).toFixed(0),
+                areaRequired: (finalCapacity * areaPerKw).toFixed(0),
                 estimatedCost: estimatedCost.toFixed(0),
                 subsidy: subsidy.toFixed(0),
                 netCost: netCost.toFixed(0),
                 monthlySavings: monthlySavings.toFixed(0),
                 annualSavings: annualSavings.toFixed(0),
-                roi: roiYears.toFixed(1)
+                roi: roiYears.toFixed(1),
+                state: config.stateName
             });
 
-            setLoading(false);
+            setCalculating(false);
         }, 800);
     };
 
@@ -105,6 +143,32 @@ export default function CalculatorPage() {
                             Enter Your Details
                         </h2>
                         <form onSubmit={calculateSolar} className="space-y-6">
+
+                            {/* State Selection */}
+                            <div>
+                                <label htmlFor="state" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    State / Region
+                                </label>
+                                {configLoading ? (
+                                    <div className="w-full h-10 bg-gray-100 dark:bg-gray-700 rounded-md animate-pulse"></div>
+                                ) : (
+                                    <select
+                                        id="state"
+                                        value={selectedStateId}
+                                        onChange={(e) => setSelectedStateId(e.target.value)}
+                                        className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm py-2 px-3"
+                                        required
+                                    >
+                                        <option value="" disabled>Select your state</option>
+                                        {configs?.map((config) => (
+                                            <option key={config.id} value={config.id}>
+                                                {config.stateName}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
+                            </div>
+
                             <Input
                                 id="monthly-bill"
                                 name="monthlyBill"
@@ -133,12 +197,13 @@ export default function CalculatorPage() {
                                     </svg>
                                 }
                             />
+
                             <Button
                                 type="submit"
                                 className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-medium py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
-                                disabled={loading}
+                                disabled={calculating || configLoading || !selectedStateId}
                             >
-                                {loading ? (
+                                {calculating ? (
                                     <span className="flex items-center justify-center">
                                         <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -167,7 +232,9 @@ export default function CalculatorPage() {
                         ) : (
                             <div id="result-section" className="space-y-6">
                                 <div className="text-center pb-6 border-b border-gray-200 dark:border-gray-700">
-                                    <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400">Recommended System Size</h3>
+                                    <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400">
+                                        Recommended System Size ({result.state})
+                                    </h3>
                                     <p className="text-4xl font-extrabold text-green-600 dark:text-green-400 mt-2">
                                         {result.capacity} kW
                                     </p>

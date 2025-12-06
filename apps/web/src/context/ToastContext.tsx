@@ -1,13 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import Toast, { ToastType } from '../components/ui/Toast';
+import React, { createContext, useContext } from 'react';
+import { Toaster, toast, ToastOptions } from 'react-hot-toast';
 
-interface ToastMessage {
-    id: number;
-    message: string;
-    type: ToastType;
-}
+type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 interface ToastContextType {
     showToast: (message: string, type: ToastType) => void;
@@ -20,35 +16,53 @@ interface ToastContextType {
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
-    const [toasts, setToasts] = useState<ToastMessage[]>([]);
+    const showToast = (message: string, type: ToastType) => {
+        switch (type) {
+            case 'success':
+                toast.success(message);
+                break;
+            case 'error':
+                toast.error(message);
+                break;
+            case 'info':
+            case 'warning': // react-hot-toast doesn't have warning by default, use custom or icon
+                toast(message, {
+                    icon: type === 'warning' ? '⚠️' : 'ℹ️',
+                });
+                break;
+            default:
+                toast(message);
+        }
+    };
 
-    const showToast = useCallback((message: string, type: ToastType) => {
-        const id = Date.now();
-        setToasts((prev) => [...prev, { id, message, type }]);
-    }, []);
-
-    const showSuccess = useCallback((message: string) => showToast(message, 'success'), [showToast]);
-    const showError = useCallback((message: string) => showToast(message, 'error'), [showToast]);
-    const showInfo = useCallback((message: string) => showToast(message, 'info'), [showToast]);
-    const showWarning = useCallback((message: string) => showToast(message, 'warning'), [showToast]);
-
-    const removeToast = useCallback((id: number) => {
-        setToasts((prev) => prev.filter((toast) => toast.id !== id));
-    }, []);
+    const showSuccess = (message: string) => toast.success(message);
+    const showError = (message: string) => toast.error(message);
+    const showInfo = (message: string) => toast(message, { icon: 'ℹ️' });
+    const showWarning = (message: string) => toast(message, { icon: '⚠️' });
 
     return (
         <ToastContext.Provider value={{ showToast, showSuccess, showError, showInfo, showWarning }}>
             {children}
-            <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
-                {toasts.map((toast) => (
-                    <Toast
-                        key={toast.id}
-                        message={toast.message}
-                        type={toast.type}
-                        onClose={() => removeToast(toast.id)}
-                    />
-                ))}
-            </div>
+            <Toaster
+                position="top-center"
+                toastOptions={{
+                    duration: 4000,
+                    style: {
+                        background: '#333',
+                        color: '#fff',
+                    },
+                    success: {
+                        style: {
+                            background: '#10B981', // Green-500
+                        },
+                    },
+                    error: {
+                        style: {
+                            background: '#EF4444', // Red-500
+                        },
+                    },
+                }}
+            />
         </ToastContext.Provider>
     );
 }

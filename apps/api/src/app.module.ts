@@ -12,6 +12,8 @@ import { MediaModule } from './media/media.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { BlogModule } from './blog/blog.module';
 import { AdminModule } from './admin/admin.module';
+import { AgentsModule } from './agents/agents.module';
+import { CalculatorModule } from './calculator/calculator.module';
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { AdminModule } from './admin/admin.module';
     NotificationsModule,
     BlogModule,
     AdminModule,
+    AgentsModule,
+    CalculatorModule,
   ],
   controllers: [AppController],
   providers: [AppService],

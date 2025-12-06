@@ -107,7 +107,13 @@ export function Navbar() {
                                             <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user.email}</p>
                                         </div>
                                         <Link
-                                            href={user.role === 'user' ? '/dashboard' : '/admin/dashboard'}
+                                            href={
+                                                user.role === 'agent'
+                                                    ? '/agent/dashboard'
+                                                    : user.role === 'user'
+                                                        ? '/dashboard'
+                                                        : '/admin/dashboard'
+                                            }
                                             className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                                             role="menuitem"
                                             tabIndex={-1}
@@ -209,7 +215,13 @@ export function Navbar() {
                                     </div>
                                     <div className="mt-3 space-y-1 px-2">
                                         <Link
-                                            href={user.role === 'user' ? '/dashboard' : '/admin/dashboard'}
+                                            href={
+                                                user.role === 'agent'
+                                                    ? '/agent/dashboard'
+                                                    : user.role === 'user'
+                                                        ? '/dashboard'
+                                                        : '/admin/dashboard'
+                                            }
                                             className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
                                         >
                                             Dashboard

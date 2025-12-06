@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import api from '../../lib/api';
 import gsap from 'gsap';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import { toast } from 'react-hot-toast';
 
 export default function ApplyPage() {
     const router = useRouter();
@@ -34,6 +35,7 @@ export default function ApplyPage() {
                 setSchemes(response.data);
             } catch (error) {
                 console.error('Failed to fetch schemes', error);
+                toast.error('Failed to load schemes');
             }
         };
         fetchSchemes();
@@ -84,10 +86,12 @@ export default function ApplyPage() {
                 estimatedSubsidy: 0,
                 documents: [],
             });
+            toast.success('Application submitted successfully!');
             router.push('/dashboard');
-        } catch (error) {
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.message || 'Failed to submit application. Please try again.';
             console.error('Application submission failed', error);
-            alert('Failed to submit application. Please try again.');
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }

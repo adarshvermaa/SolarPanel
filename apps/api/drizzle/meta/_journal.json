@@ -8,6 +8,13 @@
       "when": 1764522450914,
       "tag": "0000_chunky_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1765007042410,
+      "tag": "0001_nosy_giant_girl",
+      "breakpoints": true
     }
   ]
 }

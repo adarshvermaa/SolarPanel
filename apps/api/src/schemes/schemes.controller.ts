@@ -17,11 +17,8 @@ export class SchemesController {
   }
 
   @Get()
-  findAll(@Query('search') search?: string, @Query('isActive') isActive?: string) {
-    return this.schemesService.findAll({
-      search,
-      isActive: isActive === 'true' ? true : isActive === 'false' ? false : undefined
-    });
+  findAll(@Query() query: any) {
+    return this.schemesService.findAll(query);
   }
 
   @Get(':id')

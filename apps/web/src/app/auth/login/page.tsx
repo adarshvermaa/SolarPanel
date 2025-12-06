@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import Link from 'next/link';
 import { useAuth } from '../../../context/AuthContext';
+import { toast } from 'react-hot-toast';
 
 export default function LoginPage() {
     const containerRef = useRef(null);
@@ -49,10 +50,13 @@ export default function LoginPage() {
 
         try {
             await login(formData.email, formData.password);
+            toast.success('Login successful! Redirecting...');
         } catch (error: any) {
+            const errorMessage = error.response?.data?.message || 'Invalid email or password. Please try again.';
             setErrors({
-                general: error.response?.data?.message || 'Invalid email or password. Please try again.'
+                general: errorMessage
             });
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }

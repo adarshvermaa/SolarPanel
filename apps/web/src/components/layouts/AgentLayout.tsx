@@ -1,21 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useAuth } from '../../context/AuthContext';
+import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '../ThemeToggle';
-
 import { Sidebar } from '../Sidebar';
+import { Footer } from '../Footer';
 
-
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AgentLayout({ children }: { children: React.ReactNode }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const pathname = usePathname();
     const router = useRouter();
-    const { user } = useAuth();
-
-    // Navigation items are now handled in Sidebar component
 
     return (
         <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
@@ -35,15 +28,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </button>
                     <div className="flex-1 lg:flex lg:justify-between lg:items-center">
                         <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 ml-4 lg:ml-0">
-                            Admin Panel
+                            Agent Dashboard
                         </h2>
                         <div className="hidden lg:flex items-center space-x-4">
                             <ThemeToggle />
                             <button
-                                onClick={() => router.push('/dashboard')}
+                                onClick={() => router.push('/')}
                                 className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium transition-colors"
                             >
-                                View User Dashboard →
+                                Go to Home →
                             </button>
                         </div>
                     </div>
@@ -54,7 +47,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     {children}
                 </main>
 
-
+                <Footer />
             </div>
         </div>
     );

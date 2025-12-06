@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Navbar } from './Navbar';
 import { Footer } from './Footer';
 import AdminLayout from './layouts/AdminLayout';
+import AgentLayout from './layouts/AgentLayout';
 import UserLayout from './layouts/UserLayout';
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -13,6 +14,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
     // Admin routes
     if (pathname?.startsWith('/admin')) {
         return <AdminLayout>{children}</AdminLayout>;
+    }
+
+    // Agent routes
+    if (pathname?.startsWith('/agent')) {
+        return <AgentLayout>{children}</AgentLayout>;
     }
 
     // User authenticated routes
