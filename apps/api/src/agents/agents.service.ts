@@ -81,15 +81,11 @@ export class AgentsService {
 
     // Get agent statistics (workload)
     async getAgentStats(agentId: number) {
+        // Count ALL applications assigned to this agent (regardless of status)
         const [assignedApps] = await this.db
             .select({ count: sql<number>`count(*)` })
             .from(applications)
-            .where(
-                and(
-                    eq(applications.assignedAgentId, agentId),
-                    eq(applications.status, 'approved')
-                )
-            );
+            .where(eq(applications.assignedAgentId, agentId));
 
         const [inProgressInstalls] = await this.db
             .select({ count: sql<number>`count(*)` })

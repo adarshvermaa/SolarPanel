@@ -10,11 +10,11 @@ interface UseApiOptions {
 }
 
 export function useApi<T = any>(
-    endpoint: string,
+    endpoint: string | null,
     options: UseApiOptions = {}
 ) {
     const [data, setData] = useState<T | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!!endpoint);
     const [error, setError] = useState<any>(null);
     const { showError } = useToast();
 
@@ -25,6 +25,11 @@ export function useApi<T = any>(
     }, [options]);
 
     const fetchData = useCallback(async () => {
+        if (!endpoint) {
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         setError(null);
         try {

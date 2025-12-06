@@ -32,27 +32,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         const initAuth = async () => {
-            const storedToken = localStorage.getItem('token');
-            const storedUser = localStorage.getItem('user');
+            try {
+                const storedToken = localStorage.getItem('token');
+                const storedUser = localStorage.getItem('user');
 
-            if (storedToken && storedUser) {
-                try {
-                    // Verify token with backend
-                    const response = await api.get('/auth/profile');
-                    const userData = response.data;
-                    setUser(userData);
-                    setToken(storedToken);
-                    // Update stored user data if needed
-                    localStorage.setItem('user', JSON.stringify(userData));
-                } catch (error) {
-                    console.error('Token verification failed:', error);
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    setUser(null);
-                    setToken(null);
+                console.log('Auth Init - Token:', storedToken ? 'Present' : 'Missing');
+                console.log('Auth Init - User:', storedUser ? 'Present' : 'Missing');
+
+                if (storedToken && storedUser) {
+                    try {
+                        // Set token first so API calls work
+                        setToken(storedToken);
+
+                        // Parse stored user
+                        const parsedUser = JSON.parse(storedUser);
+                        console.log('Auth Init - Parsed User:', parsedUser);
+                        console.log('Auth Init - User ID from parsed:', parsedUser?.id);
+                        setUser(parsedUser);
+
+                        // Verify token with backend (optional - for security)
+                        try {
+                            const response = await api.get('/auth/profile');
+                            const userData = response.data;
+
+                            // Update with fresh data from server
+                            setUser(userData);
+                            localStorage.setItem('user', JSON.stringify(userData));
+                            console.log('Auth Init - Token verified successfully');
+                        } catch (verifyError: any) {
+                            // Only clear auth if it's a 401/403 (invalid token)
+                            // Don't clear on network errors
+                            if (verifyError.response?.status === 401 || verifyError.response?.status === 403) {
+                                console.error('Auth Init - Token invalid, clearing auth');
+                                localStorage.removeItem('token');
+                                localStorage.removeItem('user');
+                                setUser(null);
+                                setToken(null);
+                            } else {
+                                // Network error or server down - keep using cached data
+                                console.warn('Auth Init - Could not verify token, using cached data', verifyError.message);
+                            }
+                        }
+                    } catch (parseError) {
+                        console.error('Auth Init - Error parsing stored user:', parseError);
+                        localStorage.removeItem('token');
+                        localStorage.removeItem('user');
+                        setUser(null);
+                        setToken(null);
+                    }
                 }
+            } catch (error) {
+                console.error('Auth Init - Unexpected error:', error);
+            } finally {
+                setIsLoading(false);
             }
-            setIsLoading(false);
         };
 
         initAuth();

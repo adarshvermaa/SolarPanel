@@ -22,7 +22,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
             {/* Main content */}
-            <div className="lg:pl-64 flex flex-col min-h-screen">
+            <div className="lg:pl-72 flex flex-col min-h-screen">
                 {/* Top bar */}
                 <div className="sticky top-0 z-10 flex items-center justify-between h-16 px-4 bg-white dark:bg-gray-800 shadow-sm lg:px-8 transition-colors duration-200">
                     <button

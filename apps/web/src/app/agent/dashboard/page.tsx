@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { useApi } from '@/hooks/useApi';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { toast } from 'react-hot-toast';
+import Link from 'next/link';
 
 interface Installation {
     id: number;
@@ -33,368 +34,304 @@ interface AssignedTask {
 }
 
 export default function AgentDashboard() {
-    const { user, token } = useAuth();
+    const { user, isLoading: authLoading } = useAuth();
     const router = useRouter();
-    const [tasks, setTasks] = useState<AssignedTask[]>([]);
-    const [stats, setStats] = useState({
+    const [statsEndpoint, setStatsEndpoint] = useState<string | null>(null);
+
+    // Set stats endpoint once user is loaded
+    useEffect(() => {
+        if (user?.id) {
+            console.log('Setting stats endpoint for user ID:', user.id);
+            setStatsEndpoint(`/agents/${user.id}/stats`);
+        }
+    }, [user]);
+
+    // Debug logging
+    useEffect(() => {
+        console.log('Agent Dashboard - Auth Loading:', authLoading);
+        console.log('Agent Dashboard - User:', user);
+        console.log('Agent Dashboard - User ID:', user?.id);
+        console.log('Agent Dashboard - Stats Endpoint:', statsEndpoint);
+    }, [user, authLoading, statsEndpoint]);
+
+    // Fetch tasks and stats using useApi hook
+    const { data: tasksData, loading: tasksLoading, error: tasksError } = useApi<AssignedTask[]>(
+        user ? '/agents/my-applications' : null
+    );
+    const { data: statsData, loading: statsLoading, error: statsError } = useApi(statsEndpoint);
+
+    // Debug stats
+    useEffect(() => {
+        console.log('Stats Data:', statsData);
+        console.log('Stats Loading:', statsLoading);
+        console.log('Stats Error:', statsError);
+    }, [statsData, statsLoading, statsError]);
+
+    const tasks = tasksData || [];
+    const stats = statsData || {
         assignedApplications: 0,
         inProgressInstallations: 0,
         completedInstallations: 0,
-    });
-    const [loading, setLoading] = useState(true);
-    const [selectedTask, setSelectedTask] = useState<AssignedTask | null>(null);
-    const [updateModalOpen, setUpdateModalOpen] = useState(false);
-    const [newStatus, setNewStatus] = useState<string>('');
-    const [updateNotes, setUpdateNotes] = useState('');
-    const [isUpdating, setIsUpdating] = useState(false);
+    };
 
     useEffect(() => {
-        if (!user || user.role !== 'agent') {
+        if (!authLoading && (!user || user.role !== 'agent')) {
             router.push('/dashboard');
-            return;
         }
-        fetchData();
-    }, [user, router]);
-
-    const fetchData = async () => {
-        try {
-            // Fetch assigned applications
-            const tasksResponse = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/agents/my-applications`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                }
-            );
-            const tasksData = await tasksResponse.json();
-            setTasks(tasksData);
-
-            // Fetch stats
-            const statsResponse = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/agents/${user?.id}/stats`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                }
-            );
-            const statsData = await statsResponse.json();
-            setStats(statsData);
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleUpdateStatus = async () => {
-        if (!selectedTask?.installation || !newStatus) return;
-
-        setIsUpdating(true);
-        try {
-            const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/agents/installations/${selectedTask.installation.id}/status`,
-                {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        status: newStatus,
-                        notes: updateNotes,
-                    }),
-                }
-            );
-
-            if (response.ok) {
-                await fetchData();
-                setUpdateModalOpen(false);
-                setSelectedTask(null);
-                setNewStatus('');
-                setUpdateNotes('');
-                toast.success('Status updated successfully!');
-            } else {
-                const error = await response.json();
-                toast.error(`Error: ${error.message}`);
-            }
-        } catch (error: any) {
-            console.error('Error updating status:', error);
-            toast.error(error.response?.data?.message || 'Failed to update status');
-        } finally {
-            setIsUpdating(false);
-        }
-    };
-
-    const openUpdateModal = (task: AssignedTask) => {
-        setSelectedTask(task);
-        setNewStatus(task.installation?.status || 'scheduled');
-        setUpdateNotes(task.installation?.notes || '');
-        setUpdateModalOpen(true);
-    };
+    }, [user, authLoading, router]);
 
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'scheduled':
-                return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+                return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800';
             case 'in_progress':
-                return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+                return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800';
             case 'completed':
-                return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+                return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800';
             case 'cancelled':
-                return 'bg-red-500/20 text-red-400 border-red-500/30';
+                return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800';
             default:
-                return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+                return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800';
         }
     };
 
-    if (loading) {
+    const getStatusIcon = (status: string) => {
+        switch (status) {
+            case 'scheduled':
+                return '📅';
+            case 'in_progress':
+                return '🔄';
+            case 'completed':
+                return '✅';
+            case 'cancelled':
+                return '❌';
+            default:
+                return '📋';
+        }
+    };
+
+    // Show loading while auth is initializing
+    if (authLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
+            <div className="flex justify-center items-center min-h-[60vh]">
                 <LoadingSpinner size="lg" />
             </div>
         );
     }
 
+    // If no user after auth loads, will redirect
+    if (!user) {
+        return null;
+    }
+
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-8">
-            <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-                        Agent Dashboard
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-400">
-                        Manage your installation tasks
-                    </p>
-                </div>
+        <div className="max-w-7xl mx-auto">
+            {/* Welcome Header */}
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                    Welcome back, {user?.fullName}! 👋
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400">
+                    Here's an overview of your installation tasks
+                </p>
 
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white dark:bg-gradient-to-br dark:from-blue-500/20 dark:to-blue-600/20 backdrop-blur-sm rounded-2xl border border-blue-200 dark:border-blue-500/30 p-6 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-blue-600 dark:text-blue-200 text-sm font-medium mb-1">
-                                    Assigned Tasks
-                                </p>
-                                <p className="text-4xl font-bold text-gray-900 dark:text-white">
-                                    {stats.assignedApplications}
-                                </p>
-                            </div>
-                            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-500/30 rounded-2xl flex items-center justify-center">
-                                <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
+                {/* Debug Info */}
+            </div>
 
-                    <div className="bg-white dark:bg-gradient-to-br dark:from-yellow-500/20 dark:to-yellow-600/20 backdrop-blur-sm rounded-2xl border border-yellow-200 dark:border-yellow-500/30 p-6 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-yellow-600 dark:text-yellow-200 text-sm font-medium mb-1">
-                                    In Progress
-                                </p>
-                                <p className="text-4xl font-bold text-gray-900 dark:text-white">
-                                    {stats.inProgressInstallations}
-                                </p>
-                            </div>
-                            <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-500/30 rounded-2xl flex items-center justify-center">
-                                <svg className="w-8 h-8 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white dark:bg-gradient-to-br dark:from-emerald-500/20 dark:to-emerald-600/20 backdrop-blur-sm rounded-2xl border border-emerald-200 dark:border-emerald-500/30 p-6 shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-emerald-600 dark:text-emerald-200 text-sm font-medium mb-1">
-                                    Completed
-                                </p>
-                                <p className="text-4xl font-bold text-gray-900 dark:text-white">
-                                    {stats.completedInstallations}
-                                </p>
-                            </div>
-                            <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-500/30 rounded-2xl flex items-center justify-center">
-                                <svg className="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Tasks List */}
-                <div className="bg-white dark:bg-slate-800/50 dark:backdrop-blur-sm rounded-2xl border border-gray-200 dark:border-slate-700/50 p-6 shadow-sm">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-                        My Installation Tasks ({tasks.length})
-                    </h2>
-
-                    {tasks.length === 0 ? (
-                        <div className="text-center py-12">
-                            <svg className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                            </svg>
-                            <p className="text-gray-500 dark:text-gray-400 text-lg">No tasks assigned yet</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                            {tasks.map((task) => (
-                                <div
-                                    key={task.application.id}
-                                    className="bg-gray-50 dark:bg-slate-700/30 rounded-xl p-6 border border-gray-200 dark:border-slate-600/50 hover:border-emerald-500 dark:hover:border-emerald-500/50 transition-all shadow-sm"
-                                >
-                                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                                                    {task.application.applicationNumber}
-                                                </h3>
-                                                <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(task.installation?.status || 'scheduled')}`}>
-                                                    {task.installation?.status || 'scheduled'}
-                                                </span>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                                <div>
-                                                    <p className="text-gray-600 dark:text-gray-400 mb-1">Customer</p>
-                                                    <p className="text-gray-900 dark:text-white font-medium">
-                                                        {task.application.applicantName}
-                                                    </p>
-                                                    <p className="text-gray-600 dark:text-gray-400">
-                                                        {task.application.applicantPhone}
-                                                    </p>
-                                                </div>
-
-                                                <div>
-                                                    <p className="text-gray-600 dark:text-gray-400 mb-1">Location</p>
-                                                    <p className="text-gray-900 dark:text-white font-medium">
-                                                        {task.application.city}, {task.application.state}
-                                                    </p>
-                                                    <p className="text-gray-600 dark:text-gray-400">
-                                                        {task.application.address}
-                                                    </p>
-                                                </div>
-
-                                                <div>
-                                                    <p className="text-gray-600 dark:text-gray-400 mb-1">Capacity</p>
-                                                    <p className="text-gray-900 dark:text-white font-medium">
-                                                        {task.application.requestedCapacity} kW
-                                                    </p>
-                                                </div>
-
-                                                {task.installation?.scheduledDate && (
-                                                    <div>
-                                                        <p className="text-gray-600 dark:text-gray-400 mb-1">Scheduled Date</p>
-                                                        <p className="text-gray-900 dark:text-white font-medium">
-                                                            {new Date(task.installation.scheduledDate).toLocaleDateString()}
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {task.installation?.notes && (
-                                                <div className="mt-4 p-3 bg-gray-100 dark:bg-slate-800/50 rounded-lg">
-                                                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Notes</p>
-                                                    <p className="text-gray-900 dark:text-white text-sm">{task.installation.notes}</p>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="flex flex-col gap-2 lg:ml-4">
-                                            <button
-                                                onClick={() => openUpdateModal(task)}
-                                                className="px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors font-medium whitespace-nowrap"
-                                            >
-                                                Update Status
-                                            </button>
-                                            <a
-                                                href={`tel:${task.application.applicantPhone}`}
-                                                className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors font-medium text-center whitespace-nowrap"
-                                            >
-                                                Call Customer
-                                            </a>
-                                        </div>
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {statsLoading ? (
+                    <>
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-lg animate-pulse">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex-1">
+                                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24 mb-3"></div>
+                                        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
                                     </div>
+                                    <div className="bg-gray-200 dark:bg-gray-700 h-14 w-14 rounded-lg"></div>
                                 </div>
-                            ))}
+                            </div>
+                        ))}
+                    </>
+                ) : (
+                    <>
+                        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-blue-100 text-sm font-medium mb-1">Total Assigned</p>
+                                    <p className="text-4xl font-bold">{stats.assignedApplications}</p>
+                                </div>
+                                <div className="bg-white/20 p-3 rounded-lg">
+                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                    </svg>
+                                </div>
+                            </div>
                         </div>
-                    )}
+
+                        <div className="bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-yellow-100 text-sm font-medium mb-1">In Progress</p>
+                                    <p className="text-4xl font-bold">{stats.inProgressInstallations}</p>
+                                </div>
+                                <div className="bg-white/20 p-3 rounded-lg">
+                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-green-100 text-sm font-medium mb-1">Completed</p>
+                                    <p className="text-4xl font-bold">{stats.completedInstallations}</p>
+                                </div>
+                                <div className="bg-white/20 p-3 rounded-lg">
+                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 mb-8">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Link
+                        href="/agent/installations"
+                        className="flex items-center gap-3 p-4 rounded-lg border-2 border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors group"
+                    >
+                        <div className="bg-emerald-500 p-2 rounded-lg group-hover:scale-110 transition-transform">
+                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">View All Tasks</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Manage all installations</p>
+                        </div>
+                    </Link>
+
+                    <Link
+                        href="/agent/installations?status=in_progress"
+                        className="flex items-center gap-3 p-4 rounded-lg border-2 border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-colors group"
+                    >
+                        <div className="bg-yellow-500 p-2 rounded-lg group-hover:scale-110 transition-transform">
+                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">Active Tasks</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Continue in-progress work</p>
+                        </div>
+                    </Link>
                 </div>
             </div>
 
-            {/* Update Status Modal */}
-            {updateModalOpen && selectedTask && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 max-w-md w-full p-6 shadow-xl">
-                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                            Update Installation Status
-                        </h3>
-
-                        <div className="mb-4">
-                            <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Application</p>
-                            <p className="text-gray-900 dark:text-white font-semibold">
-                                {selectedTask.application.applicationNumber}
-                            </p>
-                            <p className="text-gray-600 dark:text-gray-400 text-sm">
-                                {selectedTask.application.applicantName}
-                            </p>
-                        </div>
-
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Status
-                            </label>
-                            <select
-                                value={newStatus}
-                                onChange={(e) => setNewStatus(e.target.value)}
-                                className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                            >
-                                <option value="scheduled">Scheduled</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="completed">Completed</option>
-                                <option value="cancelled">Cancelled</option>
-                            </select>
-                        </div>
-
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Notes
-                            </label>
-                            <textarea
-                                value={updateNotes}
-                                onChange={(e) => setUpdateNotes(e.target.value)}
-                                rows={4}
-                                className="w-full px-4 py-2 bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                                placeholder="Add any updates or notes..."
-                            />
-                        </div>
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => {
-                                    setUpdateModalOpen(false);
-                                    setSelectedTask(null);
-                                }}
-                                disabled={isUpdating}
-                                className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-900 dark:text-white rounded-lg transition-colors font-medium disabled:opacity-50"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleUpdateStatus}
-                                disabled={isUpdating}
-                                className="flex-1 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors font-medium disabled:opacity-50"
-                            >
-                                {isUpdating ? 'Updating...' : 'Update'}
-                            </button>
-                        </div>
-                    </div>
+            {/* Tasks List */}
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                        Recent Tasks ({tasks.length})
+                    </h2>
+                    {tasks.length > 3 && (
+                        <Link
+                            href="/agent/installations"
+                            className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium"
+                        >
+                            View All →
+                        </Link>
+                    )}
                 </div>
-            )}
+
+                {tasks.length === 0 ? (
+                    <div className="text-center py-12">
+                        <svg className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        </svg>
+                        <p className="text-gray-500 dark:text-gray-400 text-lg mb-2">No tasks assigned yet</p>
+                        <p className="text-gray-400 dark:text-gray-500 text-sm">Check back later for new installation assignments</p>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {tasks.slice(0, 5).map((task) => (
+                            <div
+                                key={task.application.id}
+                                className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all group"
+                            >
+                                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                                                {task.application.applicationNumber}
+                                            </h3>
+                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(task.installation?.status || 'scheduled')}`}>
+                                                {getStatusIcon(task.installation?.status || 'scheduled')} {task.installation?.status?.toUpperCase().replace('_', ' ') || 'SCHEDULED'}
+                                            </span>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                </svg>
+                                                <span className="font-medium text-gray-900 dark:text-white">{task.application.applicantName}</span>
+                                            </div>
+
+                                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                </svg>
+                                                <span>{task.application.city}, {task.application.state}</span>
+                                            </div>
+
+                                            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                                </svg>
+                                                <span>{task.application.requestedCapacity} kW</span>
+                                            </div>
+
+                                            {task.installation?.scheduledDate && (
+                                                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                    <span>{new Date(task.installation.scheduledDate).toLocaleDateString()}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row gap-2 lg:ml-4">
+                                        <Link
+                                            href={`/agent/installations/${task.installation?.id}`}
+                                            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors font-medium text-center whitespace-nowrap shadow-sm group-hover:shadow-md"
+                                        >
+                                            Update Task
+                                        </Link>
+                                        <a
+                                            href={`tel:${task.application.applicantPhone}`}
+                                            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-center whitespace-nowrap shadow-sm"
+                                        >
+                                            📞 Call
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

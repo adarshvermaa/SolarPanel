@@ -32,7 +32,14 @@ export default function AdminRoute({ children }: AdminRouteProps) {
     }
 
     if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
-        return null;
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center">
+                <h2 className="text-xl font-bold text-red-600">Access Denied</h2>
+                <p className="mt-2 text-gray-600">You do not have permission to view this page.</p>
+                <p className="text-sm text-gray-500 mt-1">Current Role: {user?.role || 'None'}</p>
+
+            </div>
+        );
     }
 
     return <>{children}</>;

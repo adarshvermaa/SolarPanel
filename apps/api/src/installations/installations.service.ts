@@ -37,7 +37,8 @@ export class InstallationsService {
     // Role based filtering
     if (role === 'user') {
       conditions.push(eq(applications.userId, userId));
-    } else if (role === 'installer') {
+    } else if (role === 'installer' || role === 'agent') {
+      // Both installers and agents should only see installations assigned to them
       conditions.push(eq(installations.installerId, userId));
     }
 

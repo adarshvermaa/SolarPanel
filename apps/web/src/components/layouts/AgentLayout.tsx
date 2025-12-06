@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '../ThemeToggle';
 import { Sidebar } from '../Sidebar';
-import { Footer } from '../Footer';
 
 export default function AgentLayout({ children }: { children: React.ReactNode }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -15,7 +14,7 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
             {/* Main content */}
-            <div className="lg:pl-64 flex flex-col min-h-screen">
+            <div className="lg:pl-72 flex flex-col min-h-screen">
                 {/* Top bar */}
                 <div className="sticky top-0 z-10 flex items-center justify-between h-16 px-4 bg-white dark:bg-gray-800 shadow-sm lg:px-8 transition-colors duration-200">
                     <button
@@ -28,16 +27,10 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
                     </button>
                     <div className="flex-1 lg:flex lg:justify-between lg:items-center">
                         <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100 ml-4 lg:ml-0">
-                            Agent Dashboard
+                            Agent Portal
                         </h2>
                         <div className="hidden lg:flex items-center space-x-4">
                             <ThemeToggle />
-                            <button
-                                onClick={() => router.push('/')}
-                                className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium transition-colors"
-                            >
-                                Go to Home →
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -46,8 +39,6 @@ export default function AgentLayout({ children }: { children: React.ReactNode })
                 <main className="flex-grow p-4 lg:p-8">
                     {children}
                 </main>
-
-                <Footer />
             </div>
         </div>
     );

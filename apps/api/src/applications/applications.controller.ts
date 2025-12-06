@@ -13,17 +13,17 @@ export class ApplicationsController {
   @Post()
   @Roles('user', 'admin', 'superadmin')
   create(@Body() createApplicationDto: CreateApplicationDto, @Request() req: any) {
-    return this.applicationsService.create(createApplicationDto, req.user.userId);
+    return this.applicationsService.create(createApplicationDto, req.user.id);
   }
 
   @Get()
   findAll(@Request() req: any, @Query() query: any) {
-    return this.applicationsService.findAll(req.user.userId, req.user.role, query);
+    return this.applicationsService.findAll(req.user.id, req.user.role, query);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string, @Request() req: any) {
-    return this.applicationsService.findOne(+id, req.user.userId, req.user.role);
+    return this.applicationsService.findOne(+id, req.user.id, req.user.role);
   }
 
   @Patch(':id/status')
@@ -33,6 +33,6 @@ export class ApplicationsController {
     @Body() updateDto: UpdateApplicationStatusDto,
     @Request() req: any
   ) {
-    return this.applicationsService.updateStatus(+id, updateDto, req.user.userId);
+    return this.applicationsService.updateStatus(+id, updateDto, req.user.id);
   }
 }

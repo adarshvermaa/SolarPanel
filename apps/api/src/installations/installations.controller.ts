@@ -18,7 +18,7 @@ export class InstallationsController {
 
   @Get()
   findAll(@Request() req: any, @Query() query: any) {
-    return this.installationsService.findAll(req.user.userId, req.user.role, query);
+    return this.installationsService.findAll(req.user.id, req.user.role, query);
   }
 
   @Get(':id')

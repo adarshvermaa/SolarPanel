@@ -17,10 +17,17 @@ export class BlogController {
   }
 
   @Get()
-  findAll(@Query('search') search?: string, @Query('isPublished') isPublished?: string) {
+  findAll(
+    @Query('search') search?: string,
+    @Query('isPublished') isPublished?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
     return this.blogService.findAll({
       search,
-      isPublished: isPublished === 'true' ? true : isPublished === 'false' ? false : undefined
+      isPublished: isPublished === 'true' ? true : isPublished === 'false' ? false : undefined,
+      page: page ? +page : undefined,
+      limit: limit ? +limit : undefined,
     });
   }
 

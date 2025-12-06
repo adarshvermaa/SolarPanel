@@ -35,7 +35,7 @@ export class AgentsController {
     @Post('assign')
     @Roles('admin', 'superadmin')
     assignApplicationToAgent(@Body() assignDto: AssignAgentDto, @Request() req: any) {
-        return this.agentsService.assignApplicationToAgent(assignDto, req.user.userId);
+        return this.agentsService.assignApplicationToAgent(assignDto, req.user.id);
     }
 
     // Reassign application to different agent (admin only)
@@ -46,14 +46,14 @@ export class AgentsController {
         @Body() body: { agentId: number },
         @Request() req: any
     ) {
-        return this.agentsService.reassignApplication(+applicationId, body.agentId, req.user.userId);
+        return this.agentsService.reassignApplication(+applicationId, body.agentId, req.user.id);
     }
 
     // Get agent's assigned applications (agent can view their own)
     @Get('my-applications')
     @Roles('agent')
     getMyApplications(@Request() req: any) {
-        return this.agentsService.getAgentApplications(req.user.userId);
+        return this.agentsService.getAgentApplications(req.user.id);
     }
 
     // Get specific agent's applications (admin only)
@@ -68,7 +68,7 @@ export class AgentsController {
     @Roles('admin', 'superadmin', 'agent')
     getAgentStats(@Param('agentId') agentId: string, @Request() req: any) {
         // Agents can only view their own stats
-        if (req.user.role === 'agent' && req.user.userId !== +agentId) {
+        if (req.user.role === 'agent' && req.user.id !== +agentId) {
             return { error: 'Forbidden' };
         }
         return this.agentsService.getAgentStats(+agentId);
@@ -82,6 +82,6 @@ export class AgentsController {
         @Body() updateDto: UpdateInstallationStatusDto,
         @Request() req: any
     ) {
-        return this.agentsService.updateInstallationStatus(+installationId, updateDto, req.user.userId);
+        return this.agentsService.updateInstallationStatus(+installationId, updateDto, req.user.id);
     }
 }

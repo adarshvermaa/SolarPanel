@@ -22,6 +22,7 @@ interface DataTableProps<T> {
     onSearchChange?: (search: string) => void;
     onLimitChange?: (limit: number) => void;
     isServerSide?: boolean;
+    onRenderMobileItem?: (item: T) => React.ReactNode;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -35,6 +36,7 @@ export function DataTable<T extends Record<string, any>>({
     onSearchChange,
     onLimitChange,
     isServerSide = false,
+    onRenderMobileItem,
 }: DataTableProps<T>) {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(itemsPerPageOptions[0]);
@@ -153,8 +155,29 @@ export function DataTable<T extends Record<string, any>>({
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
+            {/* Mobile View */}
+            {onRenderMobileItem && (
+                <div className="md:hidden space-y-4">
+                    {loading ? (
+                        <div className="flex justify-center py-12">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                        </div>
+                    ) : paginatedData.length === 0 ? (
+                        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                            No data found
+                        </div>
+                    ) : (
+                        paginatedData.map((item, idx) => (
+                            <div key={idx}>
+                                {onRenderMobileItem(item)}
+                            </div>
+                        ))
+                    )}
+                </div>
+            )}
+
+            {/* Desktop Table View */}
+            <div className={`${onRenderMobileItem ? 'hidden md:block' : ''} overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg`}>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-300 dark:divide-gray-700">
                         <thead className="bg-gray-50 dark:bg-gray-700">

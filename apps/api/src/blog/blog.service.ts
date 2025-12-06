@@ -2,7 +2,7 @@ import { Injectable, Inject, NotFoundException } from '@nestjs/common';
 import { DRIZZLE } from '../db/db.module';
 import type { DrizzleDB } from '../db/types';
 import { blogPosts, users } from '../db/schema';
-import { eq, desc, ilike, and } from 'drizzle-orm';
+import { eq, desc, ilike, and, sql } from 'drizzle-orm';
 import { CreatePostDto, UpdatePostDto } from './dto/create-post.dto';
 
 @Injectable()
@@ -27,7 +27,7 @@ export class BlogService {
       .returning();
   }
 
-  async findAll(query?: { search?: string; isPublished?: boolean }) {
+  async findAll(query?: { search?: string; isPublished?: boolean; page?: number; limit?: number }) {
     const conditions = [];
 
     if (query?.search) {
@@ -38,7 +38,10 @@ export class BlogService {
       conditions.push(eq(blogPosts.isPublished, query.isPublished));
     }
 
-    return this.db
+    const { page, limit } = query || {};
+    const offset = page && limit ? (page - 1) * limit : 0;
+
+    const baseQuery = this.db
       .select({
         post: blogPosts,
         author: {
@@ -50,6 +53,34 @@ export class BlogService {
       .leftJoin(users, eq(blogPosts.authorId, users.id))
       .where(conditions.length ? and(...conditions) : undefined)
       .orderBy(desc(blogPosts.createdAt));
+
+    if (limit) {
+      baseQuery.limit(limit);
+      baseQuery.offset(offset);
+    }
+
+    const data = await baseQuery;
+
+    if (page && limit) {
+      const countResult = await this.db
+        .select({ count: sql<number>`count(*)` })
+        .from(blogPosts)
+        .where(conditions.length ? and(...conditions) : undefined);
+
+      const total = Number(countResult[0]?.count || 0);
+
+      return {
+        data,
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    }
+
+    return data;
   }
 
   async findOne(id: number) {
